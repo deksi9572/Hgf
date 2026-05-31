@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>جدول القدرات - يزن</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap');
+  :root {
+    --bg:#0a0a0f; --surface:#12121a; --card:#1a1a26; --border:#2a2a3d;
+    --accent:#6c63ff; --accent2:#ff6584; --accent3:#43e97b; --accent4:#f7971e;
+    --text:#e8e8f0; --muted:#6b6b8a;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Tajawal',sans-serif;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 80% 10%,rgba(108,99,255,.08) 0%,transparent 60%),radial-gradient(ellipse 50% 30% at 10% 80%,rgba(255,101,132,.06) 0%,transparent 50%);pointer-events:none;z-index:0;}
+  .container{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:40px 20px 60px;}
+
+  /* Header */
+  .header{text-align:center;margin-bottom:50px;animation:fadeDown .6s ease;}
+  .header .badge{display:inline-block;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:13px;font-weight:700;padding:5px 18px;border-radius:20px;margin-bottom:16px;}
+  .header h1{font-size:clamp(28px,6vw,48px);font-weight:900;line-height:1.2;background:linear-gradient(135deg,#fff 0%,var(--accent) 60%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
+  .header p{color:var(--muted);font-size:15px;font-weight:300;}
+
+  /* Stats */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:40px;animation:fadeUp .6s ease .1s both;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 16px;text-align:center;position:relative;overflow:hidden;}
+  .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--line-color,var(--accent));}
+  .stat-card .num{font-size:28px;font-weight:900;color:var(--line-color,var(--accent));display:block;}
+  .stat-card .label{font-size:12px;color:var(--muted);margin-top:4px;}
+
+  /* Phase cards */
+  .phase{background:var(--card);border:1px solid var(--border);border-radius:20px;margin-bottom:24px;overflow:hidden;animation:fadeUp .6s ease both;}
+  .phase-header{padding:22px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;transition:background .2s;}
+  .phase-header:hover{background:rgba(255,255,255,.02);}
+  .phase-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+  .phase-info{flex:1;}
+  .phase-title{font-size:18px;font-weight:700;color:#fff;}
+  .phase-sub{font-size:13px;color:var(--muted);margin-top:3px;}
+  .phase-tag{font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;flex-shrink:0;}
+  .phase-toggle{color:var(--muted);font-size:18px;transition:transform .3s;}
+  .phase.open .phase-toggle{transform:rotate(180deg);}
+  .phase-body{display:none;padding:24px;}
+  .phase.open .phase-body{display:block;}
+
+  /* Week grid */
+  .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:24px;}
+  .day-cell{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 6px;text-align:center;transition:transform .2s,border-color .2s;}
+  .day-cell:hover{transform:translateY(-2px);border-color:var(--accent);}
+  .day-name{font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:500;}
+  .day-task{font-size:10px;font-weight:700;padding:3px 5px;border-radius:6px;line-height:1.4;}
+
+  /* Sessions */
+  .sessions{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+  .session{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;}
+  .session-num{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+  .session-info{flex:1;}
+  .session-title{font-size:14px;font-weight:600;color:#fff;}
+  .session-desc{font-size:12px;color:var(--muted);margin-top:2px;}
+  .session-time{font-size:12px;font-weight:700;padding:3px 10px;border-radius:10px;flex-shrink:0;}
+
+  /* Tips */
+  .tips{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-top:16px;}
+  .tips-title{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+  .tips ul{list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .tips ul li{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:flex-start;}
+  .tips ul li::before{content:'◆';color:var(--accent);font-size:8px;margin-top:4px;flex-shrink:0;}
+
+  /* ── TRACKER ── */
+  .tracker-legend{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+  .tracker-legend span{font-size:11px;padding:3px 10px;border-radius:10px;}
+
+  #days-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;}
+
+  .day-btn{background:var(--surface);border:1.5px solid var(--border);border-radius:9px;padding:7px 2px;text-align:center;cursor:pointer;transition:transform .15s,border-color .2s,background .2s;user-select:none;}
+  .day-btn:hover{transform:translateY(-2px);}
+  .day-btn .dnum{font-size:10px;color:var(--muted);margin-bottom:2px;}
+  .day-btn .dico{font-size:14px;line-height:1;}
+
+  .tracker-progress-wrap{margin-bottom:18px;}
+  .tracker-progress-wrap .row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;}
+  .tracker-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
+  .tracker-fill{height:100%;width:0%;background:linear-gradient(90deg,#6c63ff,#43e97b);border-radius:4px;transition:width .4s ease;}
+
+  .tracker-actions{margin-top:14px;text-align:center;}
+  .btn-reset{background:rgba(255,101,132,.1);color:#ff6584;border:1px solid rgba(255,101,132,.2);padding:7px 18px;border-radius:10px;font-family:'Tajawal',sans-serif;font-size:12px;cursor:pointer;}
+
+  /* ── MODAL ── */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s;}
+  .modal-overlay.active{opacity:1;pointer-events:all;}
+  .modal{background:var(--card);border:1px solid var(--border);border-radius:20px;width:100%;max-width:440px;padding:28px;animation:fadeUp .25s ease;}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+  .modal-head h3{font-size:17px;font-weight:700;color:#fff;}
+  .modal-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:0 4px;}
+  .modal-close:hover{color:#fff;}
+
+  .field-label{font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600;}
+  .field-row{margin-bottom:16px;}
+
+  .modal input[type=text],
+  .modal textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-family:'Tajawal',sans-serif;font-size:14px;outline:none;resize:none;transition:border-color .2s;}
+  .modal input[type=text]:focus,
+  .modal textarea:focus{border-color:var(--accent);}
+
+  .score-row{display:flex;gap:8px;}
+  .score-btn{flex:1;padding:8px 4px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center;}
+  .score-btn.active{border-color:var(--sc,var(--accent));background:rgba(108,99,255,.15);color:var(--sc,var(--accent));}
+
+  .modal-save{width:100%;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--accent),#8b7fff);color:#fff;font-family:'Tajawal',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;transition:opacity .2s;}
+  .modal-save:hover{opacity:.9;}
+
+  /* Saved entry preview in modal */
+  .saved-preview{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;}
+  .saved-preview .sp-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;}
+  .saved-preview .sp-label{color:var(--muted);}
+  .saved-preview .sp-val{color:#fff;font-weight:600;}
+  .saved-preview .sp-note{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6;}
+
+  /* Golden rule */
+  .golden-rule{background:linear-gradient(135deg,rgba(108,99,255,.12),rgba(255,101,132,.08));border:1px solid rgba(108,99,255,.3);border-radius:20px;padding:28px;margin-top:32px;text-align:center;animation:fadeUp .6s ease .5s both;}
+  .golden-rule .icon{font-size:32px;margin-bottom:12px;}
+  .golden-rule h3{font-size:18px;font-weight:700;color:#fff;margin-bottom:10px;}
+  .golden-rule p{font-size:14px;color:var(--muted);line-height:1.7;max-width:600px;margin:0 auto;}
+
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+  @media(max-width:600px){
+    .week-grid{grid-template-columns:repeat(4,1fr);}
+    #days-grid{grid-template-columns:repeat(6,1fr);}
+    .score-row{flex-wrap:wrap;}
+    .score-btn{min-width:calc(33% - 6px);}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="badge">🎯 خطة اختبار القدرات</div>
+    <h1>جدول يزن للقدرات</h1>
+    <p>3-4 أشهر · 45 دقيقة يومياً · من الصفر إلى الهدف</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card" style="--line-color:#6c63ff"><span class="num">4</span><div class="label">مراحل</div></div>
+    <div class="stat-card" style="--line-color:#43e97b"><span class="num">45د</span><div class="label">يومياً</div></div>
+    <div class="stat-card" style="--line-color:#ff6584"><span class="num">90+</span><div class="label">الهدف</div></div>
+  </div>
+
+  <!-- PHASE 1 -->
+  <div class="phase p1 open" style="animation-delay:.2s">
+    <div class="phase-header" onclick="togglePhase(this)">
+      <div class="phase-icon" style="background:rgba(108,99,255,.15)">🧱</div>
+      <div class="phase-info">
+        <div class="phase-title">المرحلة الأولى — بناء الأساس</div>
+        <div class="phase-sub">الشهر الأول · 4 أسابيع</div>
+      </div>
+      <div class="phase-tag" style="background:rgba(108,99,255,.15);color:#6c63ff">أسبوع 1-4</div>
+      <div class="phase-toggle">▼</div>
+    </div>
+    <div class="phase-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.7">الهدف هنا مش التدريب على أسئلة — الهدف تأسيس المهارات اللي القدرات تعتمد عليها.</p>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:600">نمط الأسبوع</div>
+      <div class="week-grid">
+        <div class="day-cell"><div class="day-name">الأحد</div><div class="day-task" style="background:rgba(108,99,255,.15);color:#6c63ff">كمي<br>أساسي</div></div>
+        <div class="day-cell"><div class="day-name">الإثنين</div><div class="day-task" style="background:rgba(255,101,132,.15);color:#ff6584">لفظي<br>مفردات</div></div>
+        <div class="day-cell"><div class="day-name">الثلاثاء</div><div class="day-task" style="background:rgba(108,99,255,.15);color:#6c63ff">كمي<br>تطبيق</div></div>
+        <div class="day-cell"><div class="day-name">الأربعاء</div><div class="day-task" style="background:rgba(255,101,132,.15);color:#ff6584">لفظي<br>فهم</div></div>
+        <div class="day-cell"><div class="day-name">الخميس</div><div class="day-task" style="background:rgba(67,233,123,.15);color:#43e97b">مراجعة<br>الأسبوع</div></div>
+        <div class="day-cell"><div class="day-name">الجمعة</div><div class="day-task" style="background:rgba(255,255,255,.05);color:var(--muted)">راحة</div></div>
+        <div class="day-cell"><div class="day-name">السبت</div><div class="day-task" style="background:rgba(67,233,123,.15);color:#43e97b">اختبار<br>قصير</div></div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:600">هيكل الجلسة اليومية (45 دقيقة)</div>
+      <div class="sessions">
+        <div class="session">
+          <div class="session-num" style="background:rgba(108,99,255,.2);color:#6c63ff">1</div>
+          <div class="session-info"><div class="session-title">مراجعة البارحة</div><div class="session-desc">5 أسئلة من الدرس السابق</div></div>
+          <div class="session-time" style="background:rgba(108,99,255,.1);color:#6c63ff">5 د</div>
+        </div>
+        <div class="session">
+          <div class="session-num" style="background:rgba(247,151,30,.2);color:#f7971e">2</div>
+          <div class="session-info"><div class="session-title">درس الجلسة</div><div class="session-desc">تعلم موضوع جديد بتركيز كامل</div></div>
+          <div class="session-time" style="background:rgba(247,151,30,.1);color:#f7971e">20 د</div>
+        </div>
+        <div class="session">
+          <div class="session-num" style="background:rgba(67,233,123,.2);color:#43e97b">3</div>
+          <div class="session-info"><div class="session-title">تطبيق فوري</div><div class="session-desc">10-15 سؤال على الموضوع فوراً</div></div>
+          <div class="session-time" style="background:rgba(67,233,123,.1);color:#43e97b">15 د</div>
+        </div>
+        <div class="session">
+          <div class="session-num" style="background:rgba(255,101,132,.2);color:#ff6584">4</div>
+          <div class="session-info"><div class="session-title">تسجيل الأخطاء</div><div class="session-desc">سجّل كل غلطة وسببها في دفتر</div></div>
+          <div class="session-time" style="background:rgba(255,101,132,.1);color:#ff6584">5 د</div>
+        </div>
+      </div>
+      <div class="tips">
+        <div class="tips-title">📚 مصادر المرحلة الأولى</div>
+        <ul>
+          <li>🎯 <strong style="color:#6c63ff">كمي — "قدرات من الصفر" (يوتيوب)</strong>: مقطع واحد يومياً · 8 مقاطع · بعد كل مقطع حل 5-10 أسئلة فوراً</li>
+          <li>🗣️ <strong style="color:#ff6584">لفظي — إيهاب عبد العظيم (يوتيوب)</strong>: 15 دقيقة يومياً بالتوازي مع الكمي</li>
+          <li>📖 مواضيع الكمي: العمليات الأساسية، النسب والتناسب، الأنماط العددية، الكسور</li>
+          <li>📖 مواضيع اللفظي: المفردات، التضاد والترادف، إكمال الجمل</li>
+          <li>✅ اختبار الأسبوع: 20 سؤال (10 كمي + 10 لفظي) وقيّس وقتك</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 2 -->
+  <div class="phase p2" style="animation-delay:.3s">
+    <div class="phase-header" onclick="togglePhase(this)">
+      <div class="phase-icon" style="background:rgba(247,151,30,.15)">⚡</div>
+      <div class="phase-info">
+        <div class="phase-title">المرحلة الثانية — بناء السرعة</div>
+        <div class="phase-sub">الشهر الثاني · 4 أسابيع</div>
+      </div>
+      <div class="phase-tag" style="background:rgba(247,151,30,.15);color:#f7971e">أسبوع 5-8</div>
+      <div class="phase-toggle">▼</div>
+    </div>
+    <div class="phase-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.7">بعد ما أسست المهارات، الآن نبني السرعة. القدرات فيها ضغط وقت — تحتاج تجاوب بسرعة ودقة في نفس الوقت.</p>
+      <div class="week-grid">
+        <div class="day-cell"><div class="day-name">الأحد</div><div class="day-task" style="background:rgba(247,151,30,.15);color:#f7971e">كمي<br>موقت</div></div>
+        <div class="day-cell"><div class="day-name">الإثنين</div><div class="day-task" style="background:rgba(255,101,132,.15);color:#ff6584">لفظي<br>موقت</div></div>
+        <div class="day-cell"><div class="day-name">الثلاثاء</div><div class="day-task" style="background:rgba(247,151,30,.15);color:#f7971e">نقاط<br>ضعف</div></div>
+        <div class="day-cell"><div class="day-name">الأربعاء</div><div class="day-task" style="background:rgba(255,101,132,.15);color:#ff6584">لفظي<br>مكثف</div></div>
+        <div class="day-cell"><div class="day-name">الخميس</div><div class="day-task" style="background:rgba(67,233,123,.15);color:#43e97b">مراجعة<br>الأخطاء</div></div>
+        <div class="day-cell"><div class="day-name">الجمعة</div><div class="day-task" style="background:rgba(255,255,255,.05);color:var(--muted)">راحة</div></div>
+        <div class="day-cell"><div class="day-name">السبت</div><div class="day-task" style="background:rgba(67,233,123,.15);color:#43e97b">نصف<br>اختبار</div></div>
+      </div>
+      <div class="sessions">
+        <div class="session">
+          <div class="session-num" style="background:rgba(247,151,30,.2);color:#f7971e">★</div>
+          <div class="session-info"><div class="session-title">قاعدة السرعة</div><div class="session-desc">20 سؤال يومياً بوقت مضغوط — 90 ثانية كمي، دقيقة لفظي</div></div>
+          <div class="session-time" style="background:rgba(247,151,30,.1);color:#f7971e">يومي</div>
+        </div>
+        <div class="session">
+          <div class="session-num" style="background:rgba(108,99,255,.2);color:#6c63ff">📊</div>
+          <div class="session-info"><div class="session-title">تتبع التقدم</div><div class="session-desc">سجّل نتيجة كل اختبار أسبوعي</div></div>
+          <div class="session-time" style="background:rgba(108,99,255,.1);color:#6c63ff">أسبوعي</div>
+        </div>
+      </div>
+      <div class="tips">
+        <div class="tips-title">📚 مصادر المرحلة الثانية</div>
+        <ul>
+          <li>📗 <strong style="color:#f7971e">كمي — المعاصر</strong>: بعد ما تخلص "قدرات من الصفر" تنتقل هنا للتطبيق المتقدم</li>
+          <li>🗣️ <strong style="color:#ff6584">لفظي — إيهاب عبد العظيم</strong>: استمر يومياً، ركّز على فهم المقروء والتناظر</li>
+          <li>⏱️ اختبار الأسبوع: 40 سؤال (20 كمي + 20 لفظي) بوقت فعلي</li>
+          <li>⚠️ أقل من 60% في موضوع؟ أرجع لـ"قدرات من الصفر" في ذلك الموضوع</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 3 -->
+  <div class="phase p3" style="animation-delay:.4s">
+    <div class="phase-header" onclick="togglePhase(this)">
+      <div class="phase-icon" style="background:rgba(67,233,123,.15)">🎯</div>
+      <div class="phase-info">
+        <div class="phase-title">المرحلة الثالثة — اختبارات محاكاة</div>
+        <div class="phase-sub">الشهر الثالث · 3-4 أسابيع</div>
+      </div>
+      <div class="phase-tag" style="background:rgba(67,233,123,.15);color:#43e97b">أسبوع 9-12</div>
+      <div class="phase-toggle">▼</div>
+    </div>
+    <div class="phase-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.7">الآن تحاكي الاختبار الحقيقي — الضغط النفسي والوقت والجلوس الطويل.</p>
+      <div class="week-grid">
+        <div class="day-cell"><div class="day-name">الأحد</div><div class="day-task" style="background:rgba(67,233,123,.15);color:#43e97b">تحليل<br>الأخطاء</div></div>
+        <div class="day-cell"><div class="day-name">الإثنين</div><div class="day-task" style="background:rgba(108,99,255,.15);color:#6c63ff">نقاط<br>ضعيفة</div></div>
+        <div class="day-cell"><div class="day-name">الثلاثاء</div><div class="day-task" style="background:rgba(67,233,123,.15);color:#43e97b">تدريب<br>مكثف</div></div>
+        <div class="day-cell"><div class="day-name">الأربعاء</div><div class="day-task" style="background:rgba(108,99,255,.15);color:#6c63ff">مراجعة<br>عامة</div></div>
+        <div class="day-cell"><div class="day-name">الخميس</div><div class="day-task" style="background:rgba(255,255,255,.05);color:var(--muted)">استرخاء<br>ذهني</div></div>
+        <div class="day-cell"><div class="day-name">الجمعة</div><div class="day-task" style="background:rgba(255,255,255,.05);color:var(--muted)">راحة</div></div>
+        <div class="day-cell"><div class="day-name">السبت</div><div class="day-task" style="background:rgba(255,101,132,.15);color:#ff6584">اختبار<br>كامل</div></div>
+      </div>
+      <div class="sessions">
+        <div class="session">
+          <div class="session-num" style="background:rgba(67,233,123,.2);color:#43e97b">🏆</div>
+          <div class="session-info"><div class="session-title">اختبار كامل كل أسبوع</div><div class="session-desc">80+ سؤال بالوقت الرسمي — بيئة اختبار حقيقية</div></div>
+          <div class="session-time" style="background:rgba(67,233,123,.1);color:#43e97b">السبت</div>
+        </div>
+        <div class="session">
+          <div class="session-num" style="background:rgba(255,101,132,.2);color:#ff6584">🔍</div>
+          <div class="session-info"><div class="session-title">تحليل الاختبار يوم الأحد</div><div class="session-desc">افهم "ليش" غلطت وليس فقط الإجابة الصحيحة</div></div>
+          <div class="session-time" style="background:rgba(255,101,132,.1);color:#ff6584">الأحد</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 4 -->
+  <div class="phase p4" style="animation-delay:.45s">
+    <div class="phase-header" onclick="togglePhase(this)">
+      <div class="phase-icon" style="background:rgba(255,101,132,.15)">🔥</div>
+      <div class="phase-info">
+        <div class="phase-title">المرحلة الرابعة — المراجعة الأخيرة</div>
+        <div class="phase-sub">آخر أسبوعين قبل الاختبار</div>
+      </div>
+      <div class="phase-tag" style="background:rgba(255,101,132,.15);color:#ff6584">أسبوع 13-14</div>
+      <div class="phase-toggle">▼</div>
+    </div>
+    <div class="phase-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.7">هذي المرحلة مو للتعلم — للتثبيت والثقة. لا تبدأ شيء جديد.</p>
+      <div class="sessions">
+        <div class="session"><div class="session-num" style="background:rgba(255,101,132,.2);color:#ff6584">1</div><div class="session-info"><div class="session-title">الأسبوع 13: مراجعة دفتر الأخطاء</div><div class="session-desc">اقرأ كل الأخطاء اللي سجلتها</div></div></div>
+        <div class="session"><div class="session-num" style="background:rgba(255,101,132,.2);color:#ff6584">2</div><div class="session-info"><div class="session-title">اختبار محاكاة أخير</div><div class="session-desc">قبل الاختبار بأسبوع — قيّس مستواك الحقيقي</div></div></div>
+        <div class="session"><div class="session-num" style="background:rgba(255,101,132,.2);color:#ff6584">3</div><div class="session-info"><div class="session-title">الأسبوع 14: تخفيف التحميل</div><div class="session-desc">30 دقيقة فقط يومياً — المخ يحتاج راحة</div></div></div>
+        <div class="session"><div class="session-num" style="background:rgba(67,233,123,.2);color:#43e97b">✓</div><div class="session-info"><div class="session-title">يوم الاختبار</div><div class="session-desc">نوم 7+ ساعات، فطور جيد، وصول مبكر، ثق في اللي ذاكرته</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRACKER -->
+  <div class="phase open" style="animation-delay:.5s">
+    <div class="phase-header" onclick="togglePhase(this)">
+      <div class="phase-icon" style="background:rgba(67,233,123,.15)">📅</div>
+      <div class="phase-info">
+        <div class="phase-title">سجل التقدم اليومي</div>
+        <div class="phase-sub">اضغط على أي يوم لتسجيل الموضوع والنتيجة</div>
+      </div>
+      <div class="phase-tag" style="background:rgba(67,233,123,.15);color:#43e97b" id="done-count">0 / 90 يوم</div>
+      <div class="phase-toggle">▼</div>
+    </div>
+    <div class="phase-body">
+
+      <div class="tracker-legend">
+        <span style="background:rgba(108,99,255,.15);color:#6c63ff">🧱 1-8 قدرات من الصفر</span>
+        <span style="background:rgba(247,151,30,.15);color:#f7971e">⚡ 9-45 المعاصر + إيهاب</span>
+        <span style="background:rgba(67,233,123,.15);color:#43e97b">🎯 46-75 محاكاة</span>
+        <span style="background:rgba(255,101,132,.15);color:#ff6584">🔥 76-90 مراجعة</span>
+      </div>
+
+      <div class="tracker-progress-wrap">
+        <div class="row"><span>التقدم الكلي</span><span id="prog-text">0%</span></div>
+        <div class="tracker-bar"><div class="tracker-fill" id="main-prog"></div></div>
+      </div>
+
+      <div id="days-grid"></div>
+
+      <div class="tracker-actions">
+        <button class="btn-reset" onclick="resetAll()">🗑 إعادة تعيين الكل</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Golden Rule -->
+  <div class="golden-rule">
+    <div class="icon">⚠️</div>
+    <h3>القاعدة الذهبية ليزن تحديداً</h3>
+    <p>45 دقيقة يومية منتظمة أقوى بكثير من 3 ساعات كل أسبوع. الاستمرارية هي سلاحك الأقوى — ليس الكمية. إذا فاتتك يوم واحد، لا تعوّض في اليوم الثاني، فقط كمّل من حيث وقفت.</p>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" id="modal">
+    <div class="modal-head">
+      <h3 id="modal-title">اليوم 1</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <!-- Saved preview (shown when day already has data) -->
+    <div class="saved-preview" id="saved-preview" style="display:none">
+      <div class="sp-row"><span class="sp-label">الموضوع</span><span class="sp-val" id="prev-topic">—</span></div>
+      <div class="sp-row"><span class="sp-label">النتيجة</span><span class="sp-val" id="prev-score">—</span></div>
+      <div class="sp-note" id="prev-note"></div>
+    </div>
+
+    <div id="modal-form">
+      <div class="field-row">
+        <div class="field-label">الموضوع اللي ذاكرته اليوم</div>
+        <input type="text" id="inp-topic" placeholder="مثال: النسب والتناسب · مفردات إيهاب الحلقة 3" />
+      </div>
+
+      <div class="field-row">
+        <div class="field-label">نتيجة الأسئلة</div>
+        <div class="score-row">
+          <button class="score-btn" style="--sc:#ff6584" data-score="ضعيف" onclick="selectScore(this)">😟 ضعيف</button>
+          <button class="score-btn" style="--sc:#f7971e" data-score="متوسط" onclick="selectScore(this)">😐 متوسط</button>
+          <button class="score-btn" style="--sc:#43e97b" data-score="ممتاز" onclick="selectScore(this)">😄 ممتاز</button>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-label">ملاحظة (اختياري)</div>
+        <textarea id="inp-note" rows="2" placeholder="مثال: واجهت صعوبة في الكسور، راح أعيدها بكرة"></textarea>
+      </div>
+
+      <button class="modal-save" onclick="saveDay()">✅ حفظ اليوم</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── helpers ──
+  function togglePhase(h){ h.closest('.phase').classList.toggle('open'); }
+
+  function phaseColor(d){
+    if(d<=8)  return {bg:'rgba(108,99,255,.28)',border:'#6c63ff'};
+    if(d<=45) return {bg:'rgba(247,151,30,.28)', border:'#f7971e'};
+    if(d<=75) return {bg:'rgba(67,233,123,.28)', border:'#43e97b'};
+    return          {bg:'rgba(255,101,132,.28)',border:'#ff6584'};
+  }
+
+  function load(){ try{ return JSON.parse(localStorage.getItem('qd_days')||'{}'); }catch(e){return{};} }
+  function save(d){ try{ localStorage.setItem('qd_days',JSON.stringify(d)); }catch(e){} }
+
+  // ── grid ──
+  function buildGrid(){
+    var grid=document.getElementById('days-grid');
+    var data=load();
+    grid.innerHTML='';
+    for(var d=1;d<=90;d++){
+      var c=phaseColor(d);
+      var entry=data[d];
+      var done=!!(entry&&entry.topic);
+      var cell=document.createElement('div');
+      cell.className='day-btn';
+      cell.style.background=done?c.bg:'var(--surface)';
+      cell.style.borderColor=done?c.border:'var(--border)';
+      var scoreIco = done ? (entry.score==='ممتاز'?'😄':entry.score==='متوسط'?'😐':'😟') : '○';
+      cell.innerHTML='<div class="dnum">'+d+'</div><div class="dico">'+scoreIco+'</div>';
+      (function(day){ cell.addEventListener('click',function(){ openModal(day); }); })(d);
+      cell.addEventListener('mouseenter',function(){this.style.transform='translateY(-2px)';});
+      cell.addEventListener('mouseleave',function(){this.style.transform='translateY(0)';});
+      grid.appendChild(cell);
+    }
+    updateBar(data);
+  }
+
+  function updateBar(data){
+    var done=Object.values(data).filter(function(v){return v&&v.topic;}).length;
+    var pct=Math.round(done/90*100);
+    document.getElementById('done-count').textContent=done+' / 90 يوم';
+    document.getElementById('prog-text').textContent=pct+'%';
+    document.getElementById('main-prog').style.width=pct+'%';
+  }
+
+  function resetAll(){
+    if(confirm('تأكيد: إعادة تعيين كل الأيام؟')){ save({}); buildGrid(); }
+  }
+
+  // ── modal ──
+  var currentDay=null;
+  var selectedScore=null;
+
+  function openModal(day){
+    currentDay=day;
+    selectedScore=null;
+    document.getElementById('modal-title').textContent='اليوم '+day;
+    // clear form
+    document.getElementById('inp-topic').value='';
+    document.getElementById('inp-note').value='';
+    document.querySelectorAll('.score-btn').forEach(function(b){b.classList.remove('active');});
+
+    var data=load();
+    var entry=data[day];
+    if(entry&&entry.topic){
+      // show saved preview + pre-fill form for editing
+      document.getElementById('prev-topic').textContent=entry.topic||'—';
+      document.getElementById('prev-score').textContent=entry.score||'—';
+      document.getElementById('prev-note').textContent=entry.note?'📝 '+entry.note:'';
+      document.getElementById('saved-preview').style.display='block';
+      // pre-fill
+      document.getElementById('inp-topic').value=entry.topic||'';
+      document.getElementById('inp-note').value=entry.note||'';
+      selectedScore=entry.score||null;
+      document.querySelectorAll('.score-btn').forEach(function(b){
+        if(b.dataset.score===selectedScore) b.classList.add('active');
+      });
+    } else {
+      document.getElementById('saved-preview').style.display='none';
+    }
+
+    document.getElementById('modal-overlay').classList.add('active');
+    setTimeout(function(){ document.getElementById('inp-topic').focus(); },200);
+  }
+
+  function closeModal(){
+    document.getElementById('modal-overlay').classList.remove('active');
+    currentDay=null;
+  }
+
+  function closeModalOutside(e){
+    if(e.target===document.getElementById('modal-overlay')) closeModal();
+  }
+
+  function selectScore(btn){
+    document.querySelectorAll('.score-btn').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    selectedScore=btn.dataset.score;
+  }
+
+  function saveDay(){
+    var topic=document.getElementById('inp-topic').value.trim();
+    if(!topic){ document.getElementById('inp-topic').style.borderColor='#ff6584'; return; }
+    document.getElementById('inp-topic').style.borderColor='';
+    var note=document.getElementById('inp-note').value.trim();
+    var data=load();
+    data[currentDay]={topic:topic, score:selectedScore||'—', note:note};
+    save(data);
+    closeModal();
+    buildGrid();
+  }
+
+  // keyboard close
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeModal(); });
+
+  // init
+  buildGrid();
+</script>
+</body>
+</html>
